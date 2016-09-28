@@ -2,7 +2,7 @@
 
 import os
 from flask import Flask, render_template, session, redirect, url_for, flash
-from flask_script import Manager
+from flask_script import Manager, Shell
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from datetime import datetime
@@ -10,6 +10,7 @@ from flask_wtf import Form
 from wtforms import StringField, SubmitField, PasswordField
 from wtforms.validators import Required
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate, MigrateCommand
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 # os.path.abspath(name):获得绝对路径,os.path.dirname(path):返回文件路径
@@ -25,6 +26,7 @@ manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class NameForm(Form):
     name = StringField('What is your name?', validators=[Required()])
@@ -47,7 +49,12 @@ class User(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
         
     def __repr__(self):
-        return '<User %r>' % self.username        
+        return '<User %r>' % self.username 
+
+def make_shell_context():
+    return dict(app=app, db=db, User=User, Role=Role)
+manager.add_command("shell", Shell(make_context=make_shell_context))
+manager.add_command('db', MigrateCommand)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
