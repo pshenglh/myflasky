@@ -1,9 +1,18 @@
 from flask import render_template, redirect, request, url_for, flash
 from . import auth
-from flask_login import login_required, login_user
+from flask_login import login_required, login_user, logout_user, login_required, \
+                        current_user
 from ..models import User
 from .forms import LoginForm, RegistrationForm
 from .. import db
+
+@auth.before_app_request
+def berfore_request():
+    if current_user.is_authenticated:
+        current_user.ping()
+        # if not current_user.confirmed \
+            # and request.endpoint[:5] != 'auth.':
+            # return redirect(url_for('auth.unconfirmed'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():

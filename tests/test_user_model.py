@@ -20,3 +20,13 @@ class UserModelTestCase(unittest.TestCase):
         u = User(password='cat')
         u2 = User(password='cat')
         self.asserTrue(u.password_hash != u2.password_hash)
+        
+    def test_roles_and_permission(self):
+        Role.insert_roles()
+        u = User(email='674799317@qq.com', password='cat')
+        self.assertTrue(u.can(Permission.WRITE_ARTICLES))
+        self.assertTrue(u.can(Permission.MODERATE_COMMENTS))
+        
+    def test_anonymous_user(self):
+        u = AnonymousUser()
+        self.assertFalse(u.can(Permission.FOLLOW))
