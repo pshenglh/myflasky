@@ -1,8 +1,8 @@
 from flask_wtf import Form
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
+                    ValidationError
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from ..models import User
-from wtforms import ValidationError
 
 class LoginForm(Form):
     email = StringField('Email', validators=[Required(), Length(1, 64),
