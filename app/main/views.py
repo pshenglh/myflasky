@@ -1,25 +1,37 @@
 from datetime import datetime
-from flask import render_template, session, redirect, url_for, flash
-
+from flask import render_template, session, redirect, url_for, flash, \
+                    request, current_app
 from . import main
-from .forms import NameForm, EditProfileForm, EditProfileAdminForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
 from flask_login import login_required, current_user
 from ..decorators import admin_required
-from ..models import User, Role
+from ..models import User, Role, Permission, Post
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    form = NameForm()     
-    return render_template('index.html',                            
-                            current_time=datetime.utcnow())
+    form = PostForm()     
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+            form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+                    page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+                    error_out=False)        
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, 
+                            pagination=pagination)
                             
 @main.route('/user/<username>')
 def user(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
         abort(404)
-    return render_template('user.html', user=user)
+    posts = user.posts.order_by(Post.timestamp.desc()).all()
+    return render_template('user.html', user=user, posts=posts)
     
 @main.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
